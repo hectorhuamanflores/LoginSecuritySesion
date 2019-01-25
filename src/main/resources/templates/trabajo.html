@@ -1,0 +1,165 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+<title>Spring Boot - Ejercicio Notas</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- Latest compiled and minified CSS -->
+
+<!-- Calendario -->
+ <link rel="stylesheet"  href="css/calendario/demo.css" />
+<!-- <link rel="stylesheet"  th:href="${/css/calendario/calendar.css" /> -->
+<!-- <link rel="stylesheet"  th:href="${/css/calendario/custom_2.css" /> -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" crossorigin="anonymous"></link>
+<link type="text/css" href="css/estilo.css" rel="stylesheet" />
+</head>
+<body>	
+	<div class="container">	
+		<div class="row">
+		<div sec:authorize="isAuthenticated()">
+		      | Bienvenido : 
+		      <span sec:authentication="name"></span>|
+              Roles: 
+<!--                <span sec:authentication="principal.authorities"></span> |   -->
+<!--                <span th:if="${#authorization.expression('hasRole(''ROLE_ADMIN'')')}" > -->
+        	  Administrador
+        	  </span>
+           
+           
+           <form th:action="@{j_spring_security_logout}" method="post" id="logoutForm">
+				<input id="csrfToken" type="hidden" th:name="${_csrf.parameterName}"
+					th:value="${_csrf.token}" />
+				<input id="csrfHeader" type="hidden" th:name="${_csrf.parameterName}"
+					th:value="${_csrf.headerName}" />
+			</form>
+ 			    <script> 
+				function formSubmit() {
+					document.getElementById("logoutForm").submit();
+				}
+ 			   </script> 
+           <a href="javascript:formSubmit()"> Cerrar Sesión</a>
+        </div>
+            <div class="col-md-12">
+              <center>
+				  <button id="registroHora" class="btn btn-primary btn-lg">Iniciar Jornada</button>
+				  <button class="btn btn-danger btn-lg">Terminar Jornada</button>
+              </center>
+            </div>			                		
+			<div class="col-md-6">
+				<div class="todolist not-done">
+					<h1>Por Hacer</h1>
+					<section class="main">
+		                <div class="custom-calendar-wrap">
+		                    <div id="custom-inner" class="custom-inner">
+		                        <div class="custom-header clearfix">
+		                            <nav>
+		                                <span id="custom-prev" class="custom-prev"></span>
+		                                <span id="custom-next" class="custom-next"></span>
+		                            </nav>
+		                            <h2 id="custom-month" class="custom-month"></h2>
+		                            <h3 id="custom-year" class="custom-year"></h3>
+		                        </div>
+		                        <div id="calendar" class="fc-calendar-container"></div>
+		                    </div>
+		                </div>
+		            </section>
+					<hr />
+					
+					<div class="todo-footer">
+						<strong><span class="count-todos"></span></strong> Items restantes
+					</div>
+				</div>
+			</div>
+			<div class="col-md-6">
+				<div class="todolist">
+					<h1>Terminados</h1>
+					<ul id="done-items" class="list-unstyled">
+						
+
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js" crossorigin="anonymous"></script>
+    <script th:src="@{/js/script.js}"></script>
+	<!-- Calendario -->
+	<script type="text/javascript" th:src="@{/js/calendario/jquery.calendario.js}"></script>
+        <script type="text/javascript" th:src="@{/js/calendario/data.js}"></script>
+        <script type="text/javascript"> 
+            $(function() {
+                $(document).on('shown.calendar.calendario', function(e, instance){
+                    if(!instance) instance = cal;
+                    var $cell = instance.getCell(new Date().getDate());
+                    if($cell.hasClass('fc-today')) $cell.trigger('click.calendario');
+                });
+            
+                var transEndEventNames = {
+                        'WebkitTransition' : 'webkitTransitionEnd',
+                        'MozTransition' : 'transitionend',
+                        'OTransition' : 'oTransitionEnd',
+                        'msTransition' : 'MSTransitionEnd',
+                        'transition' : 'transitionend'
+                    },
+                    transEndEventName = transEndEventNames[ Modernizr.prefixed( 'transition' ) ],
+                    $wrapper = $( '#custom-inner' ),
+                    $calendar = $( '#calendar' ),
+                    cal = $calendar.calendario({
+                        onDayClick : function( $el, data, dateProperties ) {
+
+                            if(data.content.length > 0 ) {
+                                showEvents(data.content, dateProperties );
+                            }
+
+                        },
+                        caldata : codropsEvents,
+                        displayWeekAbbr : true,
+                        events: 'click'
+                    } ),
+                    $month = $( '#custom-month' ).html( cal.getMonthName() ),
+                    $year = $( '#custom-year' ).html( cal.getYear() );
+
+                $( '#custom-next' ).on( 'click', function() {
+                    cal.gotoNextMonth( updateMonthYear );
+                } );
+                $( '#custom-prev' ).on( 'click', function() {
+                    cal.gotoPreviousMonth( updateMonthYear );
+                } );
+
+                function updateMonthYear() {                
+                    $month.html( cal.getMonthName() );
+                    $year.html( cal.getYear() );
+                }
+
+                // just an example..
+                function showEvents( contentEl, dateProperties ) {
+
+                    hideEvents();
+                    
+                    var $events = $( '<div id="custom-content-reveal" class="custom-content-reveal"><h4>Events for ' + dateProperties.monthname + ' ' + dateProperties.day + ', ' + dateProperties.year + '</h4></div>' ),
+                        $close = $( '<span class="custom-content-close"></span>' ).on( 'click', hideEvents );
+
+                    $events.append( contentEl.join('') , $close ).insertAfter( $wrapper );
+                    
+                    setTimeout( function() {
+                        $events.css( 'top', '0%' );
+                    }, 25 );
+
+                }
+                function hideEvents() {
+
+                    var $events = $( '#custom-content-reveal' );
+                    if( $events.length > 0 ) {
+                        
+                        $events.css( 'top', '100%' );
+                        Modernizr.csstransitions ? $events.on( transEndEventName, function() { $( this ).remove(); } ) : $events.remove();
+
+                    }
+
+                }
+            
+            });
+        </script>
+	
+</body>
+</html>
